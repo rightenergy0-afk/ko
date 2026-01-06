@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>손님 장부 검색</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .app {
+      background: #ffffff;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px 14px 10px;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .app-inner {
+      margin-top: 10px;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .icon-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: #eef3ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .app-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .app-subtitle {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .search-box-wrapper {
+      position: relative;
+      margin-bottom: 10px;
+      margin-top: 8px;
+    }
+    .search-label {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 11px 40px 11px 38px;
+      font-size: 16px; 
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      outline: none;
+      background-color: #f9fafb;
+      transition: all 0.15s ease;
+    }
+    .search-input:focus {
+      border-color: #4f46e5;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 17px;
+      color: #9ca3af;
+      pointer-events: none;
+    }
+    .clear-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: none;
+      background: #e5e7eb;
+      color: #374151;
+      cursor: pointer;
+      display: none;
+    }
+    .clear-btn.show {
+      display: inline-block;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 6px;
+      gap: 6px;
+    }
+    .summary-row div:first-child {
+      flex: 1;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4f46e5;
+      font-size: 10px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .result-box {
+      border-radius: 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 8px 8px 4px;
+      min-height: 60px;
+      max-height: calc(100vh - 220px); 
+      overflow-y: auto;
+    }
+
+    .result-empty {
+      font-size: 13px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 2px 8px;
+    }
+
+    .result-item {
+      padding: 8px 9px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 5px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    .result-item.highlight {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.35);
+    }
+    .result-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .result-name-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+    .result-detail {
+      font-size: 12px;
+      color: #4b5563;
+    }
+
+    .footer {
+      margin-top: 8px;
+      text-align: right;
+      font-size: 10px;
+      color: #9ca3af;
+    }
+
+    
+    @media (max-width: 480px) {
+      .app {
+        padding: 14px 10px 8px;
+      }
+      .app-title {
+        font-size: 18px;
+      }
+      .app-subtitle {
+        font-size: 11px;
+      }
+      .search-input {
+        font-size: 16px;
+      }
+      .result-name {
+        font-size: 14px;
+      }
+      .result-detail {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="app-inner">
+      <div class="app-header">
+        <div class="icon-badge">📒</div>
+        <div>
+          <div class="app-title">손님 장부 검색</div>
+          <div class="app-subtitle">이름을 입력하면 어느 장부, 몇 페이지인지 바로 확인</div>
+        </div>
+      </div>
+
+      <div class="search-box-wrapper">
+        <div class="search-label">손님 이름</div>
+        <span class="search-icon">🔍</span>
+        <input
+          id="searchInput"
+          type="text"
+          class="search-input"
+          placeholder="예) 김철수, 이영희"
+          autocomplete="off"
+        />
+        <button id="clearBtn" class="clear-btn">지우기</button>
+      </div>
+
+      <div class="summary-row">
+        <div>입력한 이름과 <b>포함되는</b> 모든 손님이 표시됩니다.</div>
+        <div class="chip">
+          📚 <span id="totalCountText">총 0명 등록</span>
+        </div>
+      </div>
+
+      <div class="result-box" id="resultBox">
+        <div class="result-empty">
+          🔎 위에 이름을 입력하면 결과가 여기 표시됩니다.
+        </div>
+      </div>
+
+      <div class="footer">
+        검색 결과 클릭 없이 바로 확인 가능
+      </div>
+    </div>
+  </div>
+
+  <script>
+    //  손님 데이터
+    
+    const data = [
+ { name: "이수지님 (동물보호팀)", book: "1권", page: "1섹션 1번" },
+{ name: "정소희님 (가족팀)", book: "1권", page: "1섹션 2번" },
+{ name: "양유진님 (홍보담당관)", book: "1권", page: "1섹션 3번" },
+{ name: "여권팀 (민원여권과)", book: "1권", page: "1섹션 4번" },
+{ name: "조유미 (생활체육과)", book: "1권", page: "1섹션 5번" },
+{ name: "이혜영 (기획예산과)", book: "1권", page: "1섹션 6번" },
+{ name: "민시원 (복지정책과)", book: "1권", page: "1섹션 7번" },
+{ name: "김시진 (민원처리팀)", book: "1권", page: "1섹션 8번" },
+{ name: "김형귀 (민원처리팀)", book: "1권", page: "1섹션 9번" },
+{ name: "신청사업건립추진단", book: "1권", page: "1섹션 10번" },
+{ name: "송혜수님 (xx행정과)", book: "1권", page: "1섹션 11번" },
+{ name: "이지우님 (세무2과)", book: "1권", page: "1섹션 12번" },
+{ name: "이정은님 (복지정책과)", book: "1권", page: "1섹션 13번" },
+{ name: "재정비 촉진팀 (강명수님)", book: "1권", page: "1섹션 14번" },
+{ name: "조춘기님 (행정지원과)", book: "1권", page: "1섹션 15번" },
+{ name: "서우경 (세무2과)", book: "1권", page: "1섹션 16번" },
+{ name: "상권 활성화", book: "1권", page: "1섹션 17번" },
+{ name: "이상엽 (환경과)", book: "1권", page: "1섹션 18번" },
+{ name: "손현준 (세무2과)", book: "1권", page: "1섹션 19번" },
+{ name: "이영숙 (세무2과)", book: "1권", page: "1섹션 20번" },
+{ name: "최유진 (홍보기획팀)", book: "1권", page: "1섹션 21번" },
+{ name: "도시계획팀", book: "1권", page: "1섹션 22번" },
+{ name: "부동산정보과 부동산관리", book: "1권", page: "2섹션 1번" },
+{ name: "홍보담당관(박지연)", book: "1권", page: "2섹션 2번" },
+{ name: "홍보담당관(오수민)", book: "1권", page: "2섹션 3번" },
+{ name: "이한솔 (건축과)", book: "1권", page: "2섹션 4번" },
+{ name: "재개발 재건축 2팀", book: "1권", page: "2섹션 5번" },
+{ name: "민원여권과(손은주)", book: "1권", page: "2섹션 6번" },
+{ name: "어르신 장애인과(복혜경)", book: "1권", page: "2섹션 7번" },
+{ name: "부구름", book: "1권", page: "2섹션 8번" },
+{ name: "김예림 (디지털정보과)", book: "1권", page: "2섹션 9번" },
+{ name: "한준기 (건축과)", book: "1권", page: "2섹션 10번" },
+{ name: "오지은 (생활보장과)", book: "1권", page: "2섹션 11번" },
+{ name: "김혜림 (민원여권과)", book: "1권", page: "2섹션 12번" },
+{ name: "민원행정팀", book: "1권", page: "2섹션 13번" },
+{ name: "강선미 (복지정책과)", book: "1권", page: "2섹션 14번" },
+{ name: "김인혜 (감사과)", book: "1권", page: "2섹션 15번" },
+{ name: "지역경제과 시장지원팀", book: "1권", page: "2섹션 16번" },
+{ name: "김도은 (도시계획과)", book: "1권", page: "2섹션 17번" },
+{ name: "안귀형 (도시계획과)", book: "1권", page: "2섹션 18번" },
+{ name: "김진범 (생활체육과)", book: "1권", page: "2섹션 19번" },
+{ name: "양유경 (감사담당관)", book: "1권", page: "2섹션 20번" },
+{ name: "이혜인 (환경과)", book: "1권", page: "3섹션 1번"},
+{ name: "박미경 (생활보장과)", book: "1권", page: "3섹션 2번"},
+{ name: "한경아 (생활체육과)", book: "1권", page: "3섹션 3번"},
+{ name: "문진희 (도시계획과)", book: "1권", page: "3섹션 4번"},
+{ name: "전준선 (청소행정과)", book: "1권", page: "3섹션 4번"},
+{ name: "감사과 민원순찰팀", book: "1권", page: "3섹션 4번"},
+{ name: "김도은님(도시계획과)", book: "1권", page: "3섹션 4번"},
+{ name: "김예리 (기획예산과)", book: "1권", page: "3섹션 4번"},
+{ name: "재난안전과", book: "1권", page: "3섹션 4번"},
+{ name: "부동산정보과 지가 조사팀(작은수첩)", book: "2권", page: "1섹션 1번" },
+{ name: "도시계획과 주거환경관리팀", book: "2권", page: "1섹션 2번" },
+{ name: "탁선일 (주택과)", book: "2권", page: "1섹션 3번" },
+{ name: "김정금 / 이정원 (민원행정팀)", book: "2권", page: "1섹션 4번" },
+{ name: "행정팀 (부동산정보과)", book: "2권", page: "1섹션 5번" },
+{ name: "생활 보장과(김선영)", book: "2권", page: "1섹션 6번" },
+{ name: "부동산정보과 (카드결제취소)", book: "2권", page: "1섹션 7번" },
+{ name: "생활보장과 (생활보장팀, 카드결제 pos취소)", book: "2권", page: "1섹션 8번" },
+{ name: "김상진 (재활지원팀)", book: "2권", page: "1섹션 9번" },
+{ name: "조상미", book: "2권", page: "1섹션 10번" },
+{ name: "공원기획팀 (이지후님,임미라님 사용)", book: "2권", page: "1섹션 11번" },
+{ name: "돌봄지원팀", book: "2권", page: "1섹션 12번" },
+{ name: "김다영", book: "2권", page: "1섹션 13번" },
+{ name: "건축지원팀", book: "2권", page: "1섹션 14번" },
+{ name: "건축정책팀", book: "2권", page: "1섹션 15번" },
+{ name: "교육지원과 평생팀(이인영)", book: "2권", page: "1섹션 16번" },
+{ name: "윤상미(문화관광체육과)", book: "2권", page: "1섹션 17번" },
+{ name: "건축안전팀", book: "2권", page: "1섹션 18번" },
+{ name: "여은지 (건축과)", book: "2권", page: "1섹션 19번" },
+{ name: "도시 경관팀(건축과)", book: "2권", page: "1섹션 20번" },
+{ name: "허니피부과(POS 취소) 영수증 부착", book: "2권", page: "2섹션 1번" },
+{ name: "정하윤", book: "2권", page: "2섹션 2번" },
+{ name: "윤신자(재무과)", book: "2권", page: "2섹션 3번" },
+{ name: "김운창", book: "2권", page: "2섹션 4번" },
+{ name: "허정연", book: "2권", page: "2섹션 5번" },
+{ name: "허지원", book: "2권", page: "2섹션 6번" },
+{ name: "박연희", book: "2권", page: "2섹션 7번" },
+{ name: "김원선", book: "2권", page: "2섹션 8번" },
+{ name: "임혜영 (기획예산과)", book: "2권", page: "2섹션 9번" },
+{ name: "최재정 (감사담당관)", book: "2권", page: "2섹션 10번" },
+{ name: "박현승 (여권팀)", book: "2권", page: "2섹션 11번" },
+{ name: "이원령 (여권팀)", book: "2권", page: "2섹션 12번" },
+{ name: "노미숙 (여권팀)", book: "2권", page: "2섹션 13번" },
+{ name: "최승미 (여권팀)", book: "2권", page: "2섹션 14번" },
+{ name: "이윤지", book: "2권", page: "2섹션 15번" },
+{ name: "홍상수", book: "2권", page: "2섹션 16번" },
+{ name: "박하람", book: "2권", page: "2섹션 17번" },
+{ name: "김현정 (청소행정과복지팀)", book: "2권", page: "2섹션 18번" },
+{ name: "김수정 (민원여권과)", book: "2권", page: "2섹션 19번" },
+{ name: "김병무 (김병무)", book: "2권", page: "2섹션 20번" },
+{ name: "디지털정보과 (한아영)", book: "2권", page: "3섹션 1번" },
+{ name: "민원여권과 (홍유란)", book: "2권", page: "3섹션 2번" },
+{ name: "재개발재건축지원단 (최정희)", book: "2권", page: "3섹션 3번" },
+{ name: "건축과 (최일도)", book: "2권", page: "3섹션 4번" },
+{ name: "이지희 (세무2과)", book: "2권", page: "3섹션 5번" },
+{ name: "문화관광과 (이순영)", book: "2권", page: "3섹션 6번" },
+{ name: "허정윤 (행정지원과·인사팀)", book: "2권", page: "3섹션 7번" },
+{ name: "김창민 (도시경관팀)", book: "2권", page: "3섹션 8번" },
+{ name: "서지윤 (복지정책과)", book: "2권", page: "3섹션 9번" },
+{ name: "건축과 공용시설팀", book: "2권", page: "3섹션 10번" },
+{ name: "문화예술팀", book: "2권", page: "3섹션 11번" },
+{ name: "정책개발팀", book: "2권", page: "3섹션 12번" },
+{ name: "대기관리팀", book: "2권", page: "3섹션 13번" },
+{ name: "안경호 (세무2과)", book: "2권", page: "3섹션 14번" },
+{ name: "김소정 (미래교육팀)", book: "2권", page: "3섹션 15번" },
+{ name: "이지원 (기획조정팀)", book: "2권", page: "3섹션 16번" },
+{ name: "이지원 (정책팀)", book: "2권", page: "3섹션 17번" },
+{ name: "이지원 (예산팀)", book: "2권", page: "3섹션 18번" },
+{ name: "이지원 (법제통계팀)", book: "2권", page: "3섹션 19번" },
+{ name: "박현 (세무2과)", book: "2권", page: "3섹션 20번" },
+{ name: "박은숙 (행정지원과)", book: "2권", page: "4섹션 1번" },
+{ name: "김지원 (세무2과)", book: "2권", page: "4섹션 2번" },
+{ name: "김지혜 (세무2과)", book: "2권", page: "4섹션 3번" },
+{ name: "임찬미 (복지정책과)", book: "2권", page: "4섹션 4번" },
+{ name: "마을협력팀", book: "2권", page: "4섹션 5번" },
+{ name: "이효진 (복지정책과)", book: "2권", page: "4섹션 6번" },
+{ name: "정유미 (홍보담당관)", book: "2권", page: "4섹션 7번" },
+{ name: "노채원 (행정지원과)", book: "2권", page: "4섹션 8번" },
+{ name: "교육지원과 교육협력팀", book: "2권", page: "4섹션 9번" },
+{ name: "조정연", book: "2권", page: "4섹션 10번" },
+{ name: "김지혜 (세무1과 0238)", book: "2권", page: "4섹션 11번" },
+{ name: "김재이 (행정지원과)", book: "2권", page: "4섹션 12번" },
+{ name: "남궁진 (생활체육과)", book: "2권", page: "4섹션 13번" },
+{ name: "백경원", book: "2권", page: "4섹션 14번" },
+{ name: "허유정 (세무2과)", book: "2권", page: "4섹션 15번" },
+{ name: "김명수 (세무2과)", book: "2권", page: "4섹션 16번" },
+{ name: "김현지 (세무2과)", book: "2권", page: "4섹션 17번" },
+{ name: "이가영 (세무2과)", book: "2권", page: "4섹션 18번" },
+{ name: "곽유선 (재무과)", book: "2권", page: "4섹션 19번" },
+{ name: "최재언", book: "2권", page: "4섹션 20번" },
+{ name: "구청 재무과(pos취소.카드결제)", book: "3권", page: "1섹션 1번" },
+{ name: "환경 기후팀 (녹색에너지)", book: "3권", page: "1섹션 2번" },
+{ name: "김민아 (청소년과)", book: "3권", page: "1섹션 3번" },
+{ name: "희망복지팀", book: "3권", page: "1섹션 4번" },
+{ name: "교육지원팀", book: "3권", page: "1섹션 5번" },
+{ name: "서재민", book: "3권", page: "1섹션 6번" },
+{ name: "최효비", book: "3권", page: "1섹션 7번" },
+{ name: "서진희", book: "3권", page: "1섹션 8번" },
+{ name: "김도영 (동물보호팀)", book: "3권", page: "1섹션 9번" },
+{ name: "전수미 (민원처리팀)", book: "3권", page: "1섹션 10번" },
+{ name: "디지털정보과 (시스템팀)", book: "3권", page: "1섹션 11번" },
+{ name: "배원열 (홍보영상팀)", book: "3권", page: "1섹션 12번" },
+{ name: "부동산 정보과 공간정보팀", book: "3권", page: "1섹션 13번" },
+{ name: "염경오", book: "3권", page: "1섹션 14번" },
+{ name: "박주원", book: "3권", page: "1섹션 15번" },
+{ name: "김상연", book: "3권", page: "1섹션 16번" },
+{ name: "최병남", book: "3권", page: "1섹션 17번" },
+{ name: "정현숙", book: "3권", page: "1섹션 18번" },
+{ name: "조경팀 (조경팀)", book: "3권", page: "1섹션 19번" },
+{ name: "박지영", book: "3권", page: "1섹션 20번" },
+{ name: "미래교육팀", book: "3권", page: "2섹션 1번" },
+{ name: "공원관리팀", book: "3권", page: "2섹션 2번" },
+{ name: "재개발 재개축 지원단", book: "3권", page: "2섹션 3번" },
+{ name: "안형욱", book: "3권", page: "2섹션 4번" },
+{ name: "이슬기 (재무과)", book: "3권", page: "2섹션 5번" },
+{ name: "지역경제과", book: "3권", page: "2섹션 6번" },
+{ name: "소상공인 지역경제과", book: "3권", page: "2섹션 7번" },
+{ name: "신소영", book: "3권", page: "2섹션 8번" },
+{ name: "주거정비과 재개발 재건축 1팀", book: "3권", page: "2섹션 9번" },
+{ name: "조훈진", book: "3권", page: "2섹션 10번" },
+{ name: "모아 주택팀", book: "3권", page: "2섹션 11번" },
+{ name: "이유빈", book: "3권", page: "2섹션 12번" },
+{ name: "자연 생태팀", book: "3권", page: "2섹션 13번" },
+{ name: "최지혜", book: "3권", page: "2섹션 14번" },
+{ name: "부동산 정보 지적관리팀", book: "3권", page: "2섹션 15번" },
+{ name: "이은희 (세무2과)", book: "3권", page: "2섹션 16번" },
+{ name: "이은주 (세무2과)", book: "3권", page: "2섹션 17번" },
+{ name: "황교영 (세무2과)", book: "3권", page: "2섹션 18번" },
+{ name: "최미림 (세무2과)", book: "3권", page: "2섹션 19번" },
+{ name: "김연희 (세무2과)", book: "3권", page: "2섹션 20번" },
+{ name: "이혜원 (세무2과)", book: "3권", page: "2섹션 21번" },
+{ name: "이상욱 (지역경제과)", book: "3권", page: "3섹션 1번" },
+{ name: "신지연 (주택과)", book: "3권", page: "3섹션 2번" },
+{ name: "이재남 (생활보장과 통합조사팀)", book: "3권", page: "3섹션 3번" },
+{ name: "이아란 (감사담당관)", book: "3권", page: "3섹션 4번" },
+{ name: "정인희 (세무2과)", book: "3권", page: "3섹션 5번" },
+{ name: "정태영 (지역경제과시장지원팀)", book: "3권", page: "3섹션 6번" },
+{ name: "배성준 (디지털정보과)", book: "3권", page: "3섹션 7번" },
+{ name: "이무비 (주택과)", book: "3권", page: "3섹션 8번" },
+{ name: "한해니 (홍보담당관)", book: "3권", page: "3섹션 9번" },
+{ name: "주거정비과 행정팀", book: "3권", page: "3섹션 10번" },
+{ name: "김소영 (민원여권과)", book: "3권", page: "3섹션 11번" },
+{ name: "김윤희 (민원여권과)", book: "3권", page: "3섹션 12번" },
+{ name: "이지선 (교육지원과)", book: "3권", page: "3섹션 13번" },
+{ name: "권희주 (교육지원과)", book: "3권", page: "3섹션 14번" },
+{ name: "장연정 (통합조사팀·생활보장과)", book: "3권", page: "3섹션 15번" },
+{ name: "조남진 (통합조사팀·생활보장과)", book: "3권", page: "3섹션 16번" },
+{ name: "김지은 (통합조사팀·생활보장과)", book: "3권", page: "3섹션 17번" },
+{ name: "서동주 (세무2과)", book: "3권", page: "3섹션 18번" },
+{ name: "김소연 (일자리청년과 청년정책팀)", book: "3권", page: "3섹션 19번" },
+{ name: "홍보담당관 (손주리)", book: "3권", page: "3섹션 20번" },
+
+
+      // 예시
+      { name: "홍길동", book: "1권", page: "45쪽" },
+      { name: "최민수", book: "3권", page: "12쪽" },
+      { name: "정수빈", book: "2권", page: "5쪽" },
+      { name: "김영민", book: "4권", page: "18쪽" },
+    ];
+
+    const input = document.getElementById("searchInput");
+    const resultBox = document.getElementById("resultBox");
+    const clearBtn = document.getElementById("clearBtn");
+    const totalCountText = document.getElementById("totalCountText");
+
+    
+    totalCountText.textContent = `총 ${data.length}명 등록`;
+
+    function renderResults(keyword) {
+      resultBox.innerHTML = "";
+
+      const trimmed = keyword.trim();
+
+      if (!trimmed) {
+        resultBox.innerHTML = `
+          <div class="result-empty">
+            🔎 위에 이름을 입력하면 결과가 여기 표시됩니다.
+          </div>
+        `;
+        return;
+      }
+
+      const results = data.filter(item => item.name.includes(trimmed));
+
+      if (results.length === 0) {
+        resultBox.innerHTML = `
+          <div class="result-empty">
+            ⚠️ "<b>${trimmed}</b>"(으)로 등록된 손님이 없습니다.
+          </div>
+        `;
+        return;
+      }
+
+      results.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "result-item" + (index === 0 ? " highlight" : "");
+        div.innerHTML = `
+          <div class="result-name">
+            ${item.name}
+            <span class="result-name-badge">${index === 0 ? "가장 일치" : "포함"}</span>
+          </div>
+          <div class="result-detail">
+            장부 <b>${item.book}</b> · <b>${item.page}</b>
+          </div>
+        `;
+        resultBox.appendChild(div);
+      });
+    }
+
+    input.addEventListener("input", () => {
+      const value = input.value;
+      clearBtn.classList.toggle("show", value.length > 0);
+      renderResults(value);
+    });
+
+    clearBtn.addEventListener("click", () => {
+      input.value = "";
+      clearBtn.classList.remove("show");
+      input.focus();
+      renderResults("");
+    });
+
+    
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
