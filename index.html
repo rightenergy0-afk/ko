@@ -216,9 +216,135 @@
         font-size: 12px;
       }
     }
+/* 🔐 Lock Screen */
+#lockScreen {
+  position: fixed;
+  inset: 0;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.lock-card {
+  width: 100%;
+  max-width: 340px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 22px 18px 18px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.10);
+  border: 1px solid #e5e7eb;
+}
+
+.lock-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lock-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  background: #eef2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.lock-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.lock-sub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.lock-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  outline: none;
+  background: #f9fafb;
+}
+
+.lock-input:focus {
+  border-color: #4f46e5;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+}
+
+.lock-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #4f46e5;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lock-btn:active {
+  transform: translateY(1px);
+}
+
+.lock-error {
+  display: none;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.lock-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: right;
+}
+
   </style>
 </head>
 <body>
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-head">
+      <div class="lock-icon">🔒</div>
+      <div>
+        <div class="lock-title">손님 장부 검색</div>
+        <div class="lock-sub">비밀번호를 입력하세요</div>
+      </div>
+    </div>
+
+    <input
+      id="passwordInput"
+      class="lock-input"
+      type="password"
+      inputmode="numeric"
+      placeholder="비밀번호"
+      autocomplete="off"
+    />
+
+    <button id="unlockBtn" class="lock-btn">확인</button>
+
+    <div id="lockError" class="lock-error">비밀번호가 올바르지 않습니다.</div>
+    <div class="lock-hint">생일</div>
+  </div>
+</div>
+
   <div class="app">
     <div class="app-inner">
       <div class="app-header">
@@ -262,6 +388,38 @@
   </div>
 
   <script>
+// 🔐 Lock
+const PASSWORD = "0812"; // 
+
+const lockScreen = document.getElementById("lockScreen");
+const passwordInput = document.getElementById("passwordInput");
+const unlockBtn = document.getElementById("unlockBtn");
+const lockError = document.getElementById("lockError");
+
+
+document.body.style.overflow = "hidden";
+
+function unlock() {
+  if ((passwordInput.value || "").trim() === PASSWORD) {
+    lockScreen.style.display = "none";
+    document.body.style.overflow = "";
+  } else {
+    lockError.style.display = "block";
+    passwordInput.value = "";
+    passwordInput.focus();
+  }
+}
+
+unlockBtn.addEventListener("click", unlock);
+passwordInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") unlock();
+});
+
+// 페이지 열리면 자동 포커스
+window.addEventListener("load", () => {
+  passwordInput.focus();
+});
+
     //  손님 데이터
     
     const data = [
@@ -535,5 +693,6 @@
       }
     });
   </script>
+
 </body>
 </html>
